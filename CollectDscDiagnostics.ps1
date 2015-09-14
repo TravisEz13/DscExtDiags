@@ -186,7 +186,7 @@ function Get-AzureVmDscDiagnostincs
 
     $zip = Get-FolderAsZip -sourceFolder $tempPath -destinationPath $tempPath2
     Start-Process $tempPath2
-    Write-Verbose -message "Please email this zip file: $zip" -verbose
+    Write-Verbose -message "Please upload this zip file to https://filetransfer.support.microsoft.com/#/, your support engineer should have emailed you a logon and password: $zip" -verbose
 }
 
 Get-AzureVmDscDiagnostincs
