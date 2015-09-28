@@ -168,16 +168,12 @@ function Get-AzureVmDscDiagnostincs
 
 $privacyConfirmation = @"
 Collecting the following information, which may contain private/sensative details including:  
-    the logs of all azure VM Extensions,
-    the azure VM Extension agent logs, 
-    The Azure VM DSC Extension logs, which may contain private/sensative details,
-    the PowerShell Desired State Configuration (DSC) Eventlogs,
-    The Windows Application Event log,
-    Your DSC configuration,
-    The CBS logs,
-    The DISM logs,
-    and the state of the Azure VM DSC Extension which includes 
-    any files sent or generated my executing the DSC configuration stored by the Azure DSC VM Extension
+    1.	 Logs from the Azure VM Agent, including all extensions
+    2.	 The state of the Azure DSC Extension, 
+       including their configuration, configuration data (but not any decryption keys)
+       and included or generated files.
+    3.	 The DSC and application event logs.
+    4. The WindowsUpdate, CBS and DISM logs
 
 This tool is provided for your convience, to ensure all data is collected as quickly as possible.  
 
@@ -209,8 +205,8 @@ Are you sure you want to continue
         
         Copy-Item -Recurse C:\WindowsAzure\Logs $tempPath\WindowsAzureLogs -ErrorAction SilentlyContinue
         Copy-Item $env:windir\WindowsUpdate.log $tempPath\WindowsUpdate.log -ErrorAction SilentlyContinue
-        Copy-Item $env:windir\logs\CBS\*.* $tempPath\CBS
-        Copy-Item $env:windir\logs\DISM\*.* $tempPath\DISM
+        Copy-Item $env:windir\logs\CBS\*.* $tempPath\CBS -ErrorAction SilentlyContinue
+        Copy-Item $env:windir\logs\DISM\*.* $tempPath\DISM -ErrorAction SilentlyContinue
 
         Export-EventLog -Name Microsoft-Windows-DSC/Operational -Path $tempPath
         Export-EventLog -Name Application -Path $tempPath
