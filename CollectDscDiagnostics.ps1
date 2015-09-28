@@ -163,30 +163,62 @@ function Export-EventLog
 
 function Get-AzureVmDscDiagnostincs
 {
-    $dir = @(Get-ChildItem C:\Packages\Plugins\Microsoft.Powershell.*DSC)[0].FullName
-    Write-Verbose -message "Found DSC extension at: $dir" -verbose
+    [CmdletBinding(    SupportsShouldProcess=$true,        ConfirmImpact="High"    )]
+    param()
 
-    $tempPath = Join-path $env:temp ([system.io.path]::GetRandomFileName())
-    if(!(Test-Path $tempPath))
+$privacyConfirmation = @"
+Collecting the following information, which may contain private/sensative details including:  
+    the logs of all azure VM Extensions,
+    the azure VM Extension agent logs, 
+    The Azure VM DSC Extension logs, which may contain private/sensative details,
+    the PowerShell Desired State Configuration (DSC) Eventlogs,
+    The Windows Application Event log,
+    Your DSC configuration,
+    The CBS logs,
+    The DISM logs,
+    and the state of the Azure VM DSC Extension which includes 
+    any files sent or generated my executing the DSC configuration stored by the Azure DSC VM Extension
+
+This tool is provided for your convience, to ensure all data is collected as quickly as possible.  
+
+Are you sure you want to continue
+"@
+    if ($pscmdlet.ShouldProcess($privacyConfirmation)) 
     {
-        mkdir $tempPath > $null
+        $dir = @(Get-ChildItem C:\Packages\Plugins\Microsoft.Powershell.*DSC -ErrorAction SilentlyContinue)[0].FullName
+        Write-Verbose -message "Found DSC extension at: $dir" -verbose
+
+        $tempPath = Join-path $env:temp ([system.io.path]::GetRandomFileName())
+        if(!(Test-Path $tempPath))
+        {
+            mkdir $tempPath > $null
+            mkdir $tempPath\CBS > $null
+            mkdir $tempPath\DISM > $null
+        }
+
+        $tempPath2 = Join-path $env:temp ([system.io.path]::GetRandomFileName())
+        if(!(Test-Path $tempPath2))
+        {
+            mkdir $tempPath2 > $null
+        }
+
+        if($dir)
+        {
+          Copy-Item -Recurse $dir $tempPath\DscPackageFolder -ErrorAction SilentlyContinue
+        }
+        
+        Copy-Item -Recurse C:\WindowsAzure\Logs $tempPath\WindowsAzureLogs -ErrorAction SilentlyContinue
+        Copy-Item $env:windir\WindowsUpdate.log $tempPath\WindowsUpdate.log -ErrorAction SilentlyContinue
+        Copy-Item $env:windir\logs\CBS\*.* $tempPath\CBS
+        Copy-Item $env:windir\logs\DISM\*.* $tempPath\DISM
+
+        Export-EventLog -Name Microsoft-Windows-DSC/Operational -Path $tempPath
+        Export-EventLog -Name Application -Path $tempPath
+
+        $zip = Get-FolderAsZip -sourceFolder $tempPath -destinationPath $tempPath2
+        Start-Process $tempPath2
+        Write-Verbose -message "Please upload this zip file to https://filetransfer.support.microsoft.com/#/, your support engineer should have emailed you a logon and password: $zip" -verbose
     }
-
-    $tempPath2 = Join-path $env:temp ([system.io.path]::GetRandomFileName())
-    if(!(Test-Path $tempPath2))
-    {
-        mkdir $tempPath2 > $null
-    }
-
-    Copy-Item -Recurse $dir $tempPath\DscPackageFolder -ErrorAction SilentlyContinue
-    Copy-Item -Recurse C:\WindowsAzure\Logs $tempPath\WindowsAzureLogs -ErrorAction SilentlyContinue
-
-    Export-EventLog -Name Microsoft-Windows-DSC/Operational -Path $tempPath
-    Export-EventLog -Name Application -Path $tempPath
-
-    $zip = Get-FolderAsZip -sourceFolder $tempPath -destinationPath $tempPath2
-    Start-Process $tempPath2
-    Write-Verbose -message "Please upload this zip file to https://filetransfer.support.microsoft.com/#/, your support engineer should have emailed you a logon and password: $zip" -verbose
 }
 
 Get-AzureVmDscDiagnostincs
