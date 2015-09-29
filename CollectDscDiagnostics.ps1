@@ -207,6 +207,7 @@ Are you sure you want to continue
         Copy-Item $env:windir\WindowsUpdate.log $tempPath\WindowsUpdate.log -ErrorAction SilentlyContinue
         Copy-Item $env:windir\logs\CBS\*.* $tempPath\CBS -ErrorAction SilentlyContinue
         Copy-Item $env:windir\logs\DISM\*.* $tempPath\DISM -ErrorAction SilentlyContinue
+        Get-HotFix | Select-Object id >  $tempPath\HotFixIds.txt
 
         Export-EventLog -Name Microsoft-Windows-DSC/Operational -Path $tempPath
         Export-EventLog -Name Application -Path $tempPath
