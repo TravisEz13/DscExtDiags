@@ -181,6 +181,7 @@ Are you sure you want to continue
 "@
     if ($pscmdlet.ShouldProcess($privacyConfirmation)) 
     {
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Finding DSC Extension ...' -PercentComplete 0
         $dir = @(Get-ChildItem C:\Packages\Plugins\Microsoft.Powershell.*DSC -ErrorAction SilentlyContinue)[0].FullName
         Write-Verbose -message "Found DSC extension at: $dir" -verbose
 
@@ -200,21 +201,39 @@ Are you sure you want to continue
 
         if($dir)
         {
-          Copy-Item -Recurse $dir $tempPath\DscPackageFolder -ErrorAction SilentlyContinue
+          Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Copying DSC Extension State...' -PercentComplete 1
+          Copy-Item -Recurse $dir $tempPath\DscPackageFolder -ErrorAction SilentlyContinue 
+          Get-ChildItem "$tempPath\DscPackageFolder" -Recurse | %{
+            if($_.Extension -ieq '.msu')
+            {
+              $newFileName = "$($_.FullName).wasHere"
+              Get-ChildItem $_.FullName | Out-String | Out-File $newFileName -Force
+              $_.Delete()
+            }
+          }
         }
         
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Copying Azure VM Agent logs ...' -PercentComplete 4
         Copy-Item -Recurse C:\WindowsAzure\Logs $tempPath\WindowsAzureLogs -ErrorAction SilentlyContinue
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Copying Windows Update logs ...' -PercentComplete 8
         Copy-Item $env:windir\WindowsUpdate.log $tempPath\WindowsUpdate.log -ErrorAction SilentlyContinue
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Copying CBS logs ...' -PercentComplete 12
         Copy-Item $env:windir\logs\CBS\*.* $tempPath\CBS -ErrorAction SilentlyContinue
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Copying DISM logs ...' -PercentComplete 16
         Copy-Item $env:windir\logs\DISM\*.* $tempPath\DISM -ErrorAction SilentlyContinue
-        Get-HotFix | Select-Object id >  $tempPath\HotFixIds.txt
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Getting Hotfix list ...' -PercentComplete 20
+        Get-HotFix | Out-String | Out-File  $tempPath\HotFixIds.txt
 
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Getting DSC Event log ...' -PercentComplete 25
         Export-EventLog -Name Microsoft-Windows-DSC/Operational -Path $tempPath
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Getting Application Event log ...' -PercentComplete 50
         Export-EventLog -Name Application -Path $tempPath
 
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Zipping files ...' -PercentComplete 75
         $zip = Get-FolderAsZip -sourceFolder $tempPath -destinationPath $tempPath2
         Start-Process $tempPath2
         Write-Verbose -message "Please upload this zip file to https://filetransfer.support.microsoft.com/#/, your support engineer should have emailed you a logon and password: $zip" -verbose
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Completed
     }
 }
 
