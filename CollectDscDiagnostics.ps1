@@ -174,6 +174,8 @@ Collecting the following information, which may contain private/sensative detail
        and included or generated files.
     3.	 The DSC and application event logs.
     4. The WindowsUpdate, CBS and DISM logs
+    5. The output of Get-Hotfix
+    6. The output of Get-DscLocalConfigurationManager
 
 This tool is provided for your convience, to ensure all data is collected as quickly as possible.  
 
@@ -223,6 +225,8 @@ Are you sure you want to continue
         Copy-Item $env:windir\logs\DISM\*.* $tempPath\DISM -ErrorAction SilentlyContinue
         Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Getting Hotfix list ...' -PercentComplete 20
         Get-HotFix | Out-String | Out-File  $tempPath\HotFixIds.txt
+        Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Getting Get-DscLocalConfigurationManager  output ...' -PercentComplete 22
+        Get-DscLocalConfigurationManager | Out-String | Out-File   $tempPath\Get-dsclcm.txt
 
         Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Getting DSC Event log ...' -PercentComplete 25
         Export-EventLog -Name Microsoft-Windows-DSC/Operational -Path $tempPath
@@ -232,7 +236,7 @@ Are you sure you want to continue
         Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Status 'Zipping files ...' -PercentComplete 75
         $zip = Get-FolderAsZip -sourceFolder $tempPath -destinationPath $tempPath2
         Start-Process $tempPath2
-        Write-Verbose -message "Please upload this zip file to https://filetransfer.support.microsoft.com/#/, your support engineer should have emailed you a logon and password: $zip" -verbose
+        Write-Verbose -message "Please send this zip file the engineer you have been working with.  The engineer should have emailed you instructions on how to do this: $zip" -verbose
         Write-Progress -Activity 'Get-AzureVmDscDiagnostincs' -Completed
     }
 }
