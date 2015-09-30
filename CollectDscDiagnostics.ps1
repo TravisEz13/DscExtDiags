@@ -161,7 +161,7 @@ function Export-EventLog
   Invoke-expression -command $ExportCommand
 }
 
-function Get-AzureVmDscDiagnostincs
+function Get-AzureVmDscDiagnostics
 {
     [CmdletBinding(    SupportsShouldProcess=$true,        ConfirmImpact="High"    )]
     param()
@@ -241,4 +241,4 @@ Are you sure you want to continue
     }
 }
 
-Get-AzureVmDscDiagnostincs
+Get-AzureVmDscDiagnostics
