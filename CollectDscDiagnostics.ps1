@@ -34,7 +34,7 @@ function Get-FolderAsZip
     {
         $attempts++
         $resultTable = invoke-command -ErrorAction:Continue -Session $Session -script {
-                param($logFolder, $destinationPath, $fileName)
+                param($logFolder, $destinationPath, $fileName, $ReturnValue)
                 $ErrorActionPreference = 'stop'
                 Set-StrictMode -Version latest
 
@@ -117,20 +117,31 @@ function Get-FolderAsZip
                 {
                     $caughtError = $_
                 }
-            return @{
-                    Content = $content
-                    Error = $caughtError
-                    zipFilePath = $zipFile
+                if($ReturnValue -eq 'Path')
+                {
+                    # Don't return content if we don't need it
+                    return @{
+                            Content = $null
+                            Error = $caughtError
+                            zipFilePath = $zipFile
+                        }
                 }
-                
-            } -argumentlist @($sourceFolder,$destinationPath, $fileName) -ErrorVariable zipInvokeError 
+                else
+                {
+                    return @{
+                            Content = $content
+                            Error = $caughtError
+                            zipFilePath = $zipFile
+                        }                
+                }             
+            } -argumentlist @($sourceFolder,$destinationPath, $fileName, $ReturnValue) -ErrorVariable zipInvokeError 
             
 
             if($zipInvokeError -or $resultTable.Error)
             {
                 if($attempts -lt 5)
                 {
-                    Write-Debug "An error occured trying to zip $sourceFolder on $($VM.Name).  Will retry..."
+                    Write-Debug "An error occured trying to zip $sourceFolder .  Will retry..."
                     Start-Sleep -Seconds $attempts
                 }
                 else {
@@ -143,7 +154,7 @@ function Get-FolderAsZip
                         $lastError = $zipInvokeError[0]    
                     }
                     
-                    Write-Warning "An error occured trying to zip $sourceFolder on $($VM.Name).  Aborting."
+                    Write-Warning "An error occured trying to zip $sourceFolder .  Aborting."
                     Write-ErrorInfo -ErrorObject $lastError -WriteWarning
 
                 }
