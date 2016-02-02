@@ -1,7 +1,7 @@
 # Current DSC and DSC Extension Diagnostics
 This project has been integrated into the [xDscDiagnostics module](https://github.com/PowerShell/xDscDiagnostics).  See [instructions on how to use it here.](https://github.com/PowerShell/xDscDiagnostics/blob/dev/README.md#gather-diagnostics-from-the-machine-running-dsc-or-dsc-extension)
 
-# Old DscExtDiags
+## Old DscExtDiags
 
 ~~DSC and Azure DSC Extension Diagnostics~~
 
